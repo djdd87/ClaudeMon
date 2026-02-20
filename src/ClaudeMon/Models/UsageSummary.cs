@@ -95,6 +95,18 @@ public partial class UsageSummary : ObservableObject
     // ── Live API data ──
 
     /// <summary>
+    /// Lifetime estimated API-equivalent cost in USD, summed across all models.
+    /// </summary>
+    [ObservableProperty]
+    private double _estimatedCostUsd;
+
+    /// <summary>
+    /// Total speculative pre-execution time saved, formatted for display (e.g. "4.2h", "37m").
+    /// </summary>
+    [ObservableProperty]
+    private string _timeSavedFormatted = "—";
+
+    /// <summary>
     /// Whether live API data is available (vs. estimated from local files).
     /// </summary>
     [ObservableProperty]
@@ -144,6 +156,8 @@ public partial class UsageSummary : ObservableObject
         DailyActivity = other.DailyActivity;
         LastDataDate = other.LastDataDate;
         LastRefreshTime = other.LastRefreshTime;
+        EstimatedCostUsd = other.EstimatedCostUsd;
+        TimeSavedFormatted = other.TimeSavedFormatted;
         IsLive = other.IsLive;
         SessionPercentage = other.SessionPercentage;
         SessionResetsAt = other.SessionResetsAt;

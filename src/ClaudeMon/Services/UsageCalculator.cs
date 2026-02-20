@@ -52,6 +52,18 @@ public sealed class UsageCalculator
         summary.TotalSessions = stats.TotalSessions;
         summary.TotalMessages = stats.TotalMessages;
 
+        // --- Estimated cost (sum of API-equivalent USD cost across all models) ---
+        summary.EstimatedCostUsd = stats.ModelUsage.Values.Sum(m => m.CostUSD);
+
+        // --- Speculative pre-execution time saved ---
+        var savedMs = stats.TotalSpeculationTimeSavedMs;
+        summary.TimeSavedFormatted = savedMs switch
+        {
+            < 60_000          => $"{savedMs / 1000.0:F0}s",
+            < 3_600_000       => $"{savedMs / 60_000.0:F0}m",
+            _                 => $"{savedMs / 3_600_000.0:F1}h"
+        };
+
         // --- Determine the 7-day rolling window ---
         var today = DateTime.UtcNow.Date;
         var windowStart = today.AddDays(-6); // inclusive, so 7 days total
