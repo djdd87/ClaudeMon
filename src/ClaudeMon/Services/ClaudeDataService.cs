@@ -88,7 +88,11 @@ public sealed class ClaudeDataService
                     switch (typeProp.GetString())
                     {
                         case "user":
-                            result[date] = (existing.Messages + 1, existing.OutputTokens);
+                            // Only count entries where the user authored text, not tool results.
+                            // Tool results are also sent as role=user in the API, so every tool
+                            // call generates a "type":"user" JSONL entry - we must skip those.
+                            if (IsHumanMessage(root))
+                                result[date] = (existing.Messages + 1, existing.OutputTokens);
                             break;
 
                         case "assistant":
@@ -111,6 +115,32 @@ public sealed class ClaudeDataService
 
         static long GetLong(JsonElement el, string prop) =>
             el.TryGetProperty(prop, out var v) && v.TryGetInt64(out var n) ? n : 0;
+
+        // Returns true only for entries that contain human-authored text.
+        // Filters out tool-result entries, which also appear as type="user" in the
+        // Claude API format but represent tool outputs returned to the model, not
+        // messages typed by the user.
+        static bool IsHumanMessage(JsonElement root)
+        {
+            if (!root.TryGetProperty("message", out var msg)) return false;
+            if (!msg.TryGetProperty("content", out var content)) return false;
+
+            // String content is always a real user message.
+            if (content.ValueKind == JsonValueKind.String) return true;
+
+            // Array content: human message if at least one element has type "text".
+            if (content.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var item in content.EnumerateArray())
+                {
+                    if (item.TryGetProperty("type", out var t) &&
+                        t.GetString() == "text")
+                        return true;
+                }
+            }
+
+            return false;
+        }
     }
 
     /// <summary>
