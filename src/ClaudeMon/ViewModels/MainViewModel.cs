@@ -43,19 +43,21 @@ public partial class MainViewModel : ObservableObject, IDisposable
             profile.Initialize();
     }
 
-    partial void OnSelectedProfileChanged(ProfileViewModel? value)
+    partial void OnSelectedProfileChanged(ProfileViewModel? oldValue, ProfileViewModel? newValue)
     {
-        OnPropertyChanged(nameof(Usage));
+        if (oldValue != null)
+            oldValue.PropertyChanged -= OnSelectedProfilePropertyChanged;
 
-        // Re-subscribe to usage changes on the selected profile
-        if (value != null)
-        {
-            value.PropertyChanged += (_, args) =>
-            {
-                if (args.PropertyName == nameof(ProfileViewModel.Usage) && value == SelectedProfile)
-                    OnPropertyChanged(nameof(Usage));
-            };
-        }
+        if (newValue != null)
+            newValue.PropertyChanged += OnSelectedProfilePropertyChanged;
+
+        OnPropertyChanged(nameof(Usage));
+    }
+
+    private void OnSelectedProfilePropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs args)
+    {
+        if (args.PropertyName == nameof(ProfileViewModel.Usage))
+            OnPropertyChanged(nameof(Usage));
     }
 
     private void OnProfileTrayClicked(ProfileViewModel profile)

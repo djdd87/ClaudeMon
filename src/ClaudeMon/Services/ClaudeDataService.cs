@@ -8,7 +8,7 @@ namespace ClaudeMon.Services;
 /// <summary>
 /// Reads and deserializes all Claude Code data files from the local ~/.claude/ directory.
 /// </summary>
-public class ClaudeDataService
+public sealed class ClaudeDataService
 {
     private readonly string _claudePath;
 

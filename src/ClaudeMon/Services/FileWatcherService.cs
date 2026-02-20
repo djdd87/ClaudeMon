@@ -9,7 +9,7 @@ namespace ClaudeMon.Services;
 /// Uses <see cref="FileSystemWatcher"/> for real-time notifications
 /// with a fallback polling timer to ensure freshness.
 /// </summary>
-public class FileWatcherService : IDisposable
+public sealed class FileWatcherService : IDisposable
 {
     private const int DebounceMs = 500;
 
@@ -19,6 +19,7 @@ public class FileWatcherService : IDisposable
     private readonly int _pollIntervalMs;
     private DateTime _lastNotify = DateTime.MinValue;
     private readonly object _debounceLock = new();
+    private readonly object _watcherLock = new();
     private SynchronizationContext? _syncContext;
     private bool _disposed;
 
@@ -92,9 +93,13 @@ public class FileWatcherService : IDisposable
     {
         Debug.WriteLine($"FileWatcherService: Watcher error: {e.GetException().Message}");
 
-        // Attempt to restart the watcher.
-        DisposeWatcher();
-        StartFileWatcher();
+        // Restart under lock to prevent concurrent error handlers creating multiple watchers.
+        lock (_watcherLock)
+        {
+            DisposeWatcher();
+            if (!_disposed)
+                StartFileWatcher();
+        }
     }
 
     // ────────────────────────────────────────────────────────

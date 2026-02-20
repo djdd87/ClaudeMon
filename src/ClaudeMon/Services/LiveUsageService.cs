@@ -12,9 +12,14 @@ namespace ClaudeMon.Services;
 /// or modifies it) and calls the usage endpoint. If the token is expired, falls
 /// back gracefully to null so the caller can use local estimates instead.
 /// </summary>
-public class LiveUsageService : IDisposable
+public sealed class LiveUsageService : IDisposable
 {
     private const string UsageEndpoint = "https://api.anthropic.com/api/oauth/usage";
+
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true
+    };
 
     private readonly string _credentialsPath;
     private readonly HttpClient _httpClient;
@@ -56,8 +61,7 @@ public class LiveUsageService : IDisposable
         }
 
         var json = await response.Content.ReadAsStreamAsync();
-        return await JsonSerializer.DeserializeAsync<LiveUsageResponse>(json,
-            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        return await JsonSerializer.DeserializeAsync<LiveUsageResponse>(json, JsonOptions);
     }
 
     private async Task<string?> GetTokenAsync()
@@ -94,5 +98,6 @@ public class LiveUsageService : IDisposable
     public void Dispose()
     {
         _httpClient.Dispose();
+        GC.SuppressFinalize(this);
     }
 }

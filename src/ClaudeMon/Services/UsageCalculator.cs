@@ -6,7 +6,7 @@ namespace ClaudeMon.Services;
 /// Calculates an estimated usage percentage and aggregated metrics from
 /// raw stats-cache data and plan/tier information.
 /// </summary>
-public class UsageCalculator
+public sealed class UsageCalculator
 {
     private const long DefaultWeeklyLimit = 2_500_000;
 
