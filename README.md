@@ -8,6 +8,15 @@ A Windows system tray application that monitors your [Claude Code](https://docs.
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey)
 ![.NET](https://img.shields.io/badge/.NET-10-purple)
 
+## Screenshots
+
+<!-- Dashboard popup -->
+<img width="420" height="986" alt="image" src="https://github.com/user-attachments/assets/21e87343-8b97-4e63-aa6b-52a43192fa5b" />
+
+<!-- System tray icons showing color-coded usage -->
+<img width="287" height="71" alt="image" src="https://github.com/user-attachments/assets/2430683a-ecab-4c0d-a349-60f3ba96aa22" />
+
+
 ## Features
 
 - **System tray icons** — one per Claude profile, showing your current usage percentage with color-coded status (green/amber/red)
