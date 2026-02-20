@@ -62,9 +62,10 @@ public class TrayIconService : IDisposable
 
     private static Bitmap RenderBitmap(double percentage)
     {
-        // Use DPI-aware system icon size for crisp rendering at any scaling.
-        var size = GetSystemMetrics(SM_CXSMICON);
-        if (size < 16) size = 16;
+        // Use the standard icon size (SM_CXICON) rather than the small icon size
+        // so the tray icon renders at 32×32 or larger, matching other tray icons.
+        var size = GetSystemMetrics(SM_CXICON);
+        if (size < 32) size = 32;
 
         var bitmap = new Bitmap(size, size);
 
@@ -171,7 +172,7 @@ public class TrayIconService : IDisposable
     // P/Invoke
     // ────────────────────────────────────────────────────────
 
-    private const int SM_CXSMICON = 49;
+    private const int SM_CXICON = 11;
 
     [DllImport("user32.dll")]
     private static extern int GetSystemMetrics(int nIndex);

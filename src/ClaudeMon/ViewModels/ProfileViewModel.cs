@@ -150,9 +150,8 @@ public partial class ProfileViewModel : ObservableObject, IDisposable
             if (_trayIcon != null)
             {
                 _trayIcon.ToolTipText = TooltipText;
-                // Tray icon shows the higher of session vs weekly usage
                 var iconPct = Usage.IsLive
-                    ? Math.Max(Usage.SessionPercentage, Usage.WeeklyPercentage)
+                    ? Usage.SessionPercentage
                     : Usage.EstimatedPercentage;
                 _trayIcon.Icon = _iconService.CreateNotifyIcon(iconPct);
             }

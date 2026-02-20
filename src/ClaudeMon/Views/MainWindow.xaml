@@ -49,7 +49,7 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
@@ -88,7 +88,7 @@
                                 Tag="{Binding}">
                             <Border.Style>
                                 <Style TargetType="Border">
-                                    <Setter Property="Background" Value="Transparent" />
+                                    <Setter Property="Background" Value="{StaticResource BgCardBrush}" />
                                     <Style.Triggers>
                                         <DataTrigger Value="True">
                                             <DataTrigger.Binding>
@@ -98,7 +98,7 @@
                                                              RelativeSource="{RelativeSource AncestorType=Window}" />
                                                 </MultiBinding>
                                             </DataTrigger.Binding>
-                                            <Setter Property="Background" Value="{StaticResource BgCardBrush}" />
+                                            <Setter Property="Background" Value="Transparent" />
                                         </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
@@ -113,12 +113,8 @@
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
 
-            <!-- ========== Scrollable Content (binds to SelectedProfile.Usage) ========== -->
-            <ScrollViewer Grid.Row="2"
-                          VerticalScrollBarVisibility="Auto"
-                          HorizontalScrollBarVisibility="Disabled"
-                          Padding="0">
-                <StackPanel Margin="16,12,16,8">
+            <!-- ========== Content (binds to SelectedProfile.Usage) ========== -->
+            <StackPanel Grid.Row="2" Margin="16,12,16,8">
 
                     <!-- ===== 1. Usage Gauge ===== -->
                     <StackPanel HorizontalAlignment="Center"
@@ -234,8 +230,7 @@
                     <controls:ActivityChart DailyData="{Binding SelectedProfile.Usage.DailyActivity, Mode=OneWay}"
                                             Margin="0,0,0,8" />
 
-                </StackPanel>
-            </ScrollViewer>
+            </StackPanel>
 
             <!-- ========== Footer ========== -->
             <Border Grid.Row="3"
