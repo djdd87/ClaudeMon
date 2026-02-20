@@ -66,7 +66,8 @@ public partial class ProfileViewModel : ObservableObject, IDisposable
     {
         _trayIcon = new TaskbarIcon
         {
-            ToolTipText = $"{ProfileName} - Loading..."
+            ToolTipText = $"{ProfileName} - Loading...",
+            Icon = _iconService.CreateNotifyIcon(-1)
         };
         _trayIcon.TrayLeftMouseUp += (_, _) => TrayLeftClicked?.Invoke(this);
 
