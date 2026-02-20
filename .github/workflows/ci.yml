@@ -55,7 +55,7 @@ jobs:
         uses: schneegans/dynamic-badges-action@v1.7.0
         with:
           auth: ${{ secrets.GIST_TOKEN }}
-          gistID: GIST_ID_HERE
+          gistID: fc399a7fd7731730d631acd3039a4e18
           filename: claudemon-coverage.json
           label: coverage
           message: ${{ steps.coverage.outputs.percentage }}%
