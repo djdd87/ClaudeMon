@@ -62,7 +62,9 @@ public partial class MainViewModel : ObservableObject, IDisposable
     {
         SelectedProfile = profile;
 
-        if (IsWindowVisible)
+        // Check the window's actual visibility rather than IsWindowVisible, which can
+        // fall out of sync when the window hides itself via Window_Deactivated.
+        if (_mainWindow?.IsVisible == true)
             HideWindow();
         else
             ShowWindow();
