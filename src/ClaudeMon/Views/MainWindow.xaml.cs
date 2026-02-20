@@ -9,6 +9,7 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        MaxHeight = SystemParameters.WorkArea.Height;
     }
 
     private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)

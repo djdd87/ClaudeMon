@@ -83,11 +83,13 @@ public partial class MainViewModel : ObservableObject, IDisposable
                 IsWindowVisible = false;
                 _mainWindow = null;
             };
+            _mainWindow.SizeChanged += (_, _) => WindowPositioner.PositionNearTray(_mainWindow);
         }
 
         _mainWindow.DataContext = this;
-        WindowPositioner.PositionNearTray(_mainWindow);
         _mainWindow.Show();
+        _mainWindow.UpdateLayout();
+        WindowPositioner.PositionNearTray(_mainWindow);
         _mainWindow.Activate();
         IsWindowVisible = true;
     }

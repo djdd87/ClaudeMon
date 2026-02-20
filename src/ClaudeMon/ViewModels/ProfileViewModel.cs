@@ -81,6 +81,12 @@ public partial class ProfileViewModel : ObservableObject, IDisposable
         refreshItem.Click += async (_, _) => await RefreshAsync();
         menu.Items.Add(refreshItem);
 
+        menu.Items.Add(new System.Windows.Controls.Separator());
+
+        var exitItem = new System.Windows.Controls.MenuItem { Header = "Exit" };
+        exitItem.Click += (_, _) => System.Windows.Application.Current.Shutdown();
+        menu.Items.Add(exitItem);
+
         _trayIcon.ContextMenu = menu;
 
         _watcherService.DataChanged += OnDataChanged;
@@ -111,6 +117,27 @@ public partial class ProfileViewModel : ObservableObject, IDisposable
                 summary.TodaySessions = todayJsonl.Sessions;
             }
 
+            // stats-cache dailyModelTokens is only updated periodically, so the weekly
+            // total can lag badly (e.g. missing several days). Use the JSONL 7-day sum
+            // instead, which is always current.
+            var jsonlWeeklyTokens = jsonlStats.Values.Sum(v => v.OutputTokens);
+            if (jsonlWeeklyTokens > summary.WeeklyTokensUsed)
+                summary.WeeklyTokensUsed = jsonlWeeklyTokens;
+
+            // Build model breakdown from JSONL data (always live) and use it
+            // instead of the potentially stale stats-cache model breakdown.
+            var jsonlModelBreakdown = new Dictionary<string, long>(StringComparer.OrdinalIgnoreCase);
+            foreach (var dayStats in jsonlStats.Values)
+            {
+                if (dayStats.TokensByModel is null) continue;
+                foreach (var (model, tokens) in dayStats.TokensByModel)
+                {
+                    jsonlModelBreakdown[model] = jsonlModelBreakdown.GetValueOrDefault(model) + tokens;
+                }
+            }
+            if (jsonlModelBreakdown.Count > 0)
+                summary.ModelBreakdown = jsonlModelBreakdown;
+
             summary.DailyActivity = summary.DailyActivity.Select(day =>
             {
                 if (jsonlStats.TryGetValue(day.Date, out var jsonlDay) && jsonlDay.Messages > day.Messages)
@@ -130,7 +157,7 @@ public partial class ProfileViewModel : ObservableObject, IDisposable
                     {
                         summary.SessionPercentage = liveUsage.FiveHour.Utilization;
                         System.Diagnostics.Debug.WriteLine(
-                            $"[{ProfileName}] Live 5h: {liveUsage.FiveHour.Utilization:P1}, resets: {liveUsage.FiveHour.ResetsAt}");
+                            $"[{ProfileName}] Live 5h: {liveUsage.FiveHour.Utilization:F1}%, resets: {liveUsage.FiveHour.ResetsAt}");
                         if (DateTime.TryParse(liveUsage.FiveHour.ResetsAt, null,
                                 System.Globalization.DateTimeStyles.RoundtripKind, out var sessionReset))
                             summary.SessionResetsAt = sessionReset.ToLocalTime();
@@ -140,7 +167,7 @@ public partial class ProfileViewModel : ObservableObject, IDisposable
                     {
                         summary.WeeklyPercentage = liveUsage.SevenDay.Utilization;
                         System.Diagnostics.Debug.WriteLine(
-                            $"[{ProfileName}] Live 7d: {liveUsage.SevenDay.Utilization:P1}, resets: {liveUsage.SevenDay.ResetsAt}");
+                            $"[{ProfileName}] Live 7d: {liveUsage.SevenDay.Utilization:F1}%, resets: {liveUsage.SevenDay.ResetsAt}");
                         if (DateTime.TryParse(liveUsage.SevenDay.ResetsAt, null,
                                 System.Globalization.DateTimeStyles.RoundtripKind, out var weeklyReset))
                             summary.WeeklyResetsAt = weeklyReset.ToLocalTime();

@@ -10,7 +10,7 @@
         Title="ClaudMon"
         Width="420"
         SizeToContent="Height"
-        MaxHeight="900"
+        MaxHeight="9999"
         WindowStyle="None"
         AllowsTransparency="True"
         Background="Transparent"

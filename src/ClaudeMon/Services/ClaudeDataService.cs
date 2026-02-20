@@ -47,9 +47,9 @@ public sealed class ClaudeDataService
     /// live figures for any days that are stale or missing from the cache.
     /// Only files modified within the window are read to keep the scan fast.
     /// </summary>
-    public async Task<Dictionary<DateTime, (int Messages, long OutputTokens, int Sessions)>> GetRecentJsonlStatsAsync(int days = 7)
+    public async Task<Dictionary<DateTime, (int Messages, long OutputTokens, int Sessions, Dictionary<string, long> TokensByModel)>> GetRecentJsonlStatsAsync(int days = 7)
     {
-        var result = new Dictionary<DateTime, (int Messages, long OutputTokens, int Sessions)>();
+        var result = new Dictionary<DateTime, (int Messages, long OutputTokens, int Sessions, Dictionary<string, long> TokensByModel)>();
         var projectsDir = Path.Combine(_claudePath, "projects");
         if (!Directory.Exists(projectsDir))
             return result;
@@ -102,16 +102,27 @@ public sealed class ClaudeDataService
                             // call generates a "type":"user" JSONL entry - we must skip those.
                             if (IsHumanMessage(root))
                             {
-                                result[date] = (existing.Messages + 1, existing.OutputTokens, existing.Sessions);
+                                result[date] = (existing.Messages + 1, existing.OutputTokens, existing.Sessions, existing.TokensByModel ?? new Dictionary<string, long>(StringComparer.OrdinalIgnoreCase));
                                 datesWithActivity.Add(date);
                             }
                             break;
 
                         case "assistant":
-                            if (root.TryGetProperty("message", out var msgEl) &&
-                                msgEl.TryGetProperty("usage", out var usageEl))
+                            if (root.TryGetProperty("message", out var msgEl))
                             {
-                                result[date] = (existing.Messages, existing.OutputTokens + GetLong(usageEl, "output_tokens"), existing.Sessions);
+                                if (msgEl.TryGetProperty("usage", out var usageEl))
+                                {
+                                    var outputTokens = GetLong(usageEl, "output_tokens");
+                                    var modelTokens = existing.TokensByModel ?? new Dictionary<string, long>(StringComparer.OrdinalIgnoreCase);
+
+                                    if (msgEl.TryGetProperty("model", out var modelProp))
+                                    {
+                                        var modelName = modelProp.GetString() ?? "unknown";
+                                        modelTokens[modelName] = modelTokens.GetValueOrDefault(modelName) + outputTokens;
+                                    }
+
+                                    result[date] = (existing.Messages, existing.OutputTokens + outputTokens, existing.Sessions, modelTokens);
+                                }
                             }
                             break;
                     }
@@ -126,7 +137,7 @@ public sealed class ClaudeDataService
             foreach (var date in datesWithActivity)
             {
                 result.TryGetValue(date, out var existing);
-                result[date] = (existing.Messages, existing.OutputTokens, existing.Sessions + 1);
+                result[date] = (existing.Messages, existing.OutputTokens, existing.Sessions + 1, existing.TokensByModel ?? new Dictionary<string, long>(StringComparer.OrdinalIgnoreCase));
             }
         }
 
