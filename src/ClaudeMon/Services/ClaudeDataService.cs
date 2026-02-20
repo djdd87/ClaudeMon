@@ -41,25 +41,24 @@ public class ClaudeDataService
         => await JsonFileReader.ReadAsync<ClaudeConfig>(Path.Combine(_claudePath, ".claude.json"));
 
     /// <summary>
-    /// Counts today's messages and tokens by scanning JSONL conversation files
-    /// under the projects/ subdirectory. stats-cache.json is only updated
-    /// periodically by Claude Code itself, so this gives live "today" figures.
-    /// Only files modified today are read to keep the scan fast.
+    /// Scans JSONL conversation files under the projects/ subdirectory for the last
+    /// <paramref name="days"/> UTC days and returns per-day message and output-token counts.
+    /// stats-cache.json is only updated periodically by Claude Code, so this provides
+    /// live figures for any days that are stale or missing from the cache.
+    /// Only files modified within the window are read to keep the scan fast.
     /// </summary>
-    public async Task<(int Messages, long Tokens)> GetTodayJsonlStatsAsync()
+    public async Task<Dictionary<DateTime, (int Messages, long OutputTokens)>> GetRecentJsonlStatsAsync(int days = 7)
     {
+        var result = new Dictionary<DateTime, (int Messages, long OutputTokens)>();
         var projectsDir = Path.Combine(_claudePath, "projects");
         if (!Directory.Exists(projectsDir))
-            return (0, 0);
+            return result;
 
-        var todayUtc = DateTime.UtcNow.Date;
-        int messages = 0;
-        long tokens = 0;
+        var cutoffUtc = DateTime.UtcNow.Date.AddDays(-(days - 1));
 
         foreach (var file in Directory.EnumerateFiles(projectsDir, "*.jsonl", SearchOption.AllDirectories))
         {
-            // Skip files not touched today — avoids reading the entire history.
-            if (File.GetLastWriteTimeUtc(file).Date < todayUtc)
+            if (File.GetLastWriteTimeUtc(file).Date < cutoffUtc)
                 continue;
 
             try
@@ -75,25 +74,28 @@ public class ClaudeDataService
                     using var doc = JsonDocument.Parse(line);
                     var root = doc.RootElement;
 
-                    // Only count entries from today (UTC).
                     if (!root.TryGetProperty("timestamp", out var tsProp)) continue;
                     if (!DateTime.TryParse(tsProp.GetString(), null,
                             System.Globalization.DateTimeStyles.RoundtripKind, out var ts)) continue;
-                    if (ts.Date != todayUtc) continue;
+
+                    var date = ts.ToUniversalTime().Date;
+                    if (date < cutoffUtc) continue;
 
                     if (!root.TryGetProperty("type", out var typeProp)) continue;
+
+                    result.TryGetValue(date, out var existing);
 
                     switch (typeProp.GetString())
                     {
                         case "user":
-                            messages++;
+                            result[date] = (existing.Messages + 1, existing.OutputTokens);
                             break;
 
                         case "assistant":
                             if (root.TryGetProperty("message", out var msgEl) &&
                                 msgEl.TryGetProperty("usage", out var usageEl))
                             {
-                                tokens += GetLong(usageEl, "output_tokens");
+                                result[date] = (existing.Messages, existing.OutputTokens + GetLong(usageEl, "output_tokens"));
                             }
                             break;
                     }
@@ -101,11 +103,11 @@ public class ClaudeDataService
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[GetTodayJsonlStats] {file}: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[GetRecentJsonlStats] {file}: {ex.Message}");
             }
         }
 
-        return (messages, tokens);
+        return result;
 
         static long GetLong(JsonElement el, string prop) =>
             el.TryGetProperty(prop, out var v) && v.TryGetInt64(out var n) ? n : 0;

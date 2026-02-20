@@ -95,11 +95,24 @@ public partial class ProfileViewModel : ObservableObject, IDisposable
             var creds = await _dataService.GetCredentialsAsync();
             var summary = _calculator.Calculate(stats, creds);
 
-            // stats-cache.json is only recomputed periodically by Claude Code, so "today"
-            // figures can be stale. Read directly from JSONL files for live accuracy.
-            var (todayMessages, todayTokens) = await _dataService.GetTodayJsonlStatsAsync();
-            summary.TodayMessages = todayMessages;
-            summary.TodayTokens = todayTokens;
+            // stats-cache.json is only recomputed periodically by Claude Code, so recent
+            // days can be stale or missing. Read directly from JSONL files and use those
+            // counts wherever they show more activity than the cached data.
+            var jsonlStats = await _dataService.GetRecentJsonlStatsAsync(7);
+            var todayUtc = DateTime.UtcNow.Date;
+
+            if (jsonlStats.TryGetValue(todayUtc, out var todayJsonl))
+            {
+                summary.TodayMessages = todayJsonl.Messages;
+                summary.TodayTokens = todayJsonl.OutputTokens;
+            }
+
+            summary.DailyActivity = summary.DailyActivity.Select(day =>
+            {
+                if (jsonlStats.TryGetValue(day.Date, out var jsonlDay) && jsonlDay.Messages > day.Messages)
+                    return new DailyActivitySummary(day.Date, jsonlDay.Messages, jsonlDay.OutputTokens);
+                return day;
+            }).ToList();
 
             // Try live API for accurate percentages (isolated so local stats still work on failure)
             try
