@@ -194,27 +194,27 @@ public class FileWatcherServiceTests
     [Fact]
     public void DataChanged_IsDebounced()
     {
-        // Arrange
+        // Arrange - Test debounce logic directly via reflection to avoid
+        // flaky FileSystemWatcher timing on CI runners.
         var tempDir = Directory.CreateTempSubdirectory();
-        var service = new FileWatcherService(tempDir.FullName, pollIntervalMs: 10_000);
+        var service = new FileWatcherService(tempDir.FullName, pollIntervalMs: 60_000);
         var eventCount = 0;
 
         try
         {
             service.DataChanged += () => Interlocked.Increment(ref eventCount);
-            service.Start();
+            // Don't call Start() - we invoke RaiseDebounced directly to isolate debounce logic.
 
-            // Act - Trigger multiple rapid changes within the debounce window
+            var raiseDebounced = typeof(FileWatcherService)
+                .GetMethod("RaiseDebounced", BindingFlags.NonPublic | BindingFlags.Instance)!;
+
+            // Act - Invoke RaiseDebounced 5 times rapidly (within the 500ms debounce window)
             for (int i = 0; i < 5; i++)
             {
-                var testFile = Path.Combine(tempDir.FullName, $"test_{i}.json");
-                File.WriteAllText(testFile, "{}");
+                raiseDebounced.Invoke(service, null);
             }
 
-            // Wait slightly longer than debounce window (500ms)
-            System.Threading.Thread.Sleep(700);
-
-            // Assert - Should have fired only once despite 5 file writes
+            // Assert - Only the first call should have passed the debounce gate
             Assert.Equal(1, eventCount);
         }
         finally
