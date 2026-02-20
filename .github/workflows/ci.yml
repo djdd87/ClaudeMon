@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+          dotnet-quality: 'preview'
+
+      - name: Restore
+        run: dotnet restore ClaudeMon.slnx
+
+      - name: Build
+        run: dotnet build ClaudeMon.slnx -c Release --no-restore
+
+      - name: Test with coverage
+        run: dotnet test ClaudeMon.slnx -c Release --no-build --collect:"XPlat Code Coverage" --results-directory ./TestResults
+
+      - name: Install ReportGenerator
+        run: dotnet tool install -g dotnet-reportgenerator-globaltool
+
+      - name: Generate coverage report
+        run: reportgenerator -reports:./TestResults/**/coverage.cobertura.xml -targetdir:./CoverageReport -reporttypes:"Html;TextSummary"
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: ./CoverageReport
+
+      - name: Extract coverage percentage
+        id: coverage
+        shell: pwsh
+        run: |
+          $summary = Get-Content ./CoverageReport/Summary.txt -Raw
+          $match = [regex]::Match($summary, 'Line coverage:\s*([\d.]+)%')
+          $pct = if ($match.Success) { $match.Groups[1].Value } else { "0" }
+          echo "percentage=$pct" >> $env:GITHUB_OUTPUT
+          Write-Host "Coverage: $pct%"
+
+      - name: Update coverage badge
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: schneegans/dynamic-badges-action@v1.7.0
+        with:
+          auth: ${{ secrets.GIST_TOKEN }}
+          gistID: GIST_ID_HERE
+          filename: claudemon-coverage.json
+          label: coverage
+          message: ${{ steps.coverage.outputs.percentage }}%
+          valColorRange: ${{ steps.coverage.outputs.percentage }}
+          minColorRange: 0
+          maxColorRange: 100

@@ -2,6 +2,8 @@
 
 A Windows system tray application that monitors your [Claude Code](https://docs.anthropic.com/en/docs/claude-code) usage in real time.
 
+![Build](https://github.com/djdd87/ClaudeMon/actions/workflows/ci.yml/badge.svg)
+![Coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/djdd87/GIST_ID_HERE/raw/claudemon-coverage.json)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey)
 ![.NET](https://img.shields.io/badge/.NET-10-purple)

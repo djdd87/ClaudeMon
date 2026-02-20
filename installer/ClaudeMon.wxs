@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package
+    Name="ClaudeMon"
+    Manufacturer="ClaudeMon"
+    Version="$(var.Version)"
+    UpgradeCode="7A3B8C1D-4E5F-6A7B-8C9D-0E1F2A3B4C5D">
+
+    <MajorUpgrade
+      DowngradeErrorMessage="A newer version of ClaudeMon is already installed." />
+
+    <MediaTemplate EmbedCab="yes" />
+
+    <StandardDirectory Id="ProgramFiles6432Folder">
+      <Directory Id="INSTALLFOLDER" Name="ClaudeMon">
+        <Component Id="MainExecutable" Guid="1A2B3C4D-5E6F-7A8B-9C0D-1E2F3A4B5C6D">
+          <File Id="ClaudeMonExe" Source="$(var.PublishDir)\ClaudeMon.exe" KeyPath="yes" />
+        </Component>
+        <Component Id="AppSettings" Guid="2B3C4D5E-6F7A-8B9C-0D1E-2F3A4B5C6D7E">
+          <File Id="AppSettingsJson" Source="$(var.PublishDir)\appsettings.json" KeyPath="yes" />
+        </Component>
+        <Component Id="AutoStart" Guid="3C4D5E6F-7A8B-9C0D-1E2F-3A4B5C6D7E8F">
+          <RegistryValue
+            Root="HKCU"
+            Key="SOFTWARE\Microsoft\Windows\CurrentVersion\Run"
+            Name="ClaudeMon"
+            Type="string"
+            Value="[INSTALLFOLDER]ClaudeMon.exe"
+            KeyPath="yes" />
+        </Component>
+      </Directory>
+    </StandardDirectory>
+
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Directory Id="ApplicationProgramsFolder" Name="ClaudeMon">
+        <Component Id="StartMenuShortcut" Guid="4D5E6F7A-8B9C-0D1E-2F3A-4B5C6D7E8F9A">
+          <Shortcut
+            Id="ApplicationStartMenuShortcut"
+            Name="ClaudeMon"
+            Description="Claude Code Usage Monitor"
+            Target="[INSTALLFOLDER]ClaudeMon.exe"
+            WorkingDirectory="INSTALLFOLDER" />
+          <RemoveFolder Id="CleanUpShortcut" On="uninstall" />
+          <RegistryValue
+            Root="HKCU"
+            Key="SOFTWARE\ClaudeMon"
+            Name="StartMenuShortcut"
+            Type="integer"
+            Value="1"
+            KeyPath="yes" />
+        </Component>
+      </Directory>
+    </StandardDirectory>
+
+    <Feature Id="Main" Title="ClaudeMon" Level="1">
+      <ComponentRef Id="MainExecutable" />
+      <ComponentRef Id="AppSettings" />
+      <ComponentRef Id="AutoStart" />
+      <ComponentRef Id="StartMenuShortcut" />
+    </Feature>
+  </Package>
+</Wix>

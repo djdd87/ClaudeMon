@@ -218,7 +218,7 @@ public partial class ProfileViewModel : ObservableObject, IDisposable
         Application.Current?.Dispatcher.InvokeAsync(async () => await RefreshAsync());
     }
 
-    private static string FormatTier(string? tier, string? subscription)
+    internal static string FormatTier(string? tier, string? subscription)
     {
         var t = tier ?? "";
         var s = subscription ?? "";
