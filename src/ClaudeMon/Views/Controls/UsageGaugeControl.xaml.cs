@@ -68,7 +68,7 @@ public partial class UsageGaugeControl : UserControl
         else
         {
             double clamped = Math.Clamp(percentage, 0.0, 100.0);
-            PercentageText.Text = $"~{clamped:0}%";
+            PercentageText.Text = clamped >= 99.5 ? "Limit" : $"~{clamped:0}%";
             EstLabel.Text = "Est.";
         }
 

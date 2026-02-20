@@ -95,6 +95,9 @@ public partial class ModelUsageBar : UserControl
         foreach (var (modelName, tokens) in sorted)
         {
             double percentage = (double)tokens / totalTokens * 100.0;
+            if (percentage < 0.5)
+                continue;
+
             var brush = new SolidColorBrush(
                 (Color)ColorConverter.ConvertFromString(Palette[colorIndex % Palette.Length]));
             brush.Freeze();

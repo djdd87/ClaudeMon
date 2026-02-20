@@ -187,14 +187,14 @@ public partial class ProfileViewModel : ObservableObject, IDisposable
 
             // Format tooltip
             var pctText = Usage.IsLive
-                ? $"{Usage.WeeklyPercentage:F0}%"
+                ? FormatPct(Usage.WeeklyPercentage)
                 : (Usage.EstimatedPercentage >= 0
-                    ? $"~{Usage.EstimatedPercentage:F0}% (Est.)"
+                    ? $"~{FormatPct(Usage.EstimatedPercentage)} (Est.)"
                     : "Unknown");
 
             PlanDisplayName = FormatTier(Usage.RateLimitTier, Usage.SubscriptionType);
             TooltipText = Usage.IsLive
-                ? $"{ProfileName} - {Usage.SessionPercentage:F0}% session | {Usage.WeeklyPercentage:F0}% weekly | {PlanDisplayName}"
+                ? $"{ProfileName} - {FormatPct(Usage.SessionPercentage)} session | {FormatPct(Usage.WeeklyPercentage)} weekly | {PlanDisplayName}"
                 : $"{ProfileName} - {pctText} | {PlanDisplayName}";
 
             if (_trayIcon != null)
@@ -217,6 +217,9 @@ public partial class ProfileViewModel : ObservableObject, IDisposable
     {
         Application.Current?.Dispatcher.InvokeAsync(async () => await RefreshAsync());
     }
+
+    private static string FormatPct(double percentage) =>
+        percentage >= 99.5 ? "Limit" : $"{percentage:F0}%";
 
     internal static string FormatTier(string? tier, string? subscription)
     {

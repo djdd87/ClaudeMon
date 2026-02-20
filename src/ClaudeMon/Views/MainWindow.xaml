@@ -31,6 +31,7 @@
             <converters:PercentToColorConverter x:Key="PercentToColor" />
             <converters:CountToVisibilityConverter x:Key="CountToVisibility" />
             <converters:EqualityConverter x:Key="EqualityConverter" />
+            <converters:PercentToTextConverter x:Key="PercentToText" />
         </ResourceDictionary>
     </Window.Resources>
 
@@ -136,23 +137,9 @@
                                 </Style>
                             </StackPanel.Style>
 
-                            <!-- Session percentage (primary) -->
-                            <TextBlock HorizontalAlignment="Center" Margin="0,8,0,0">
-                                <TextBlock.Style>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="FontSize" Value="22" />
-                                        <Setter Property="FontWeight" Value="Bold" />
-                                        <Setter Property="Foreground"
-                                                Value="{Binding SelectedProfile.Usage.SessionPercentage,
-                                                        Converter={StaticResource PercentToColor}}" />
-                                    </Style>
-                                </TextBlock.Style>
-                                <Run Text="{Binding SelectedProfile.Usage.SessionPercentage, StringFormat={}{0:F0}%, Mode=OneWay}" /><Run Text=" Session" FontSize="12" FontWeight="Normal" Foreground="{StaticResource TextSecondaryBrush}" />
-                            </TextBlock>
-
                             <!-- Weekly percentage -->
-                            <TextBlock HorizontalAlignment="Center" FontSize="14" Margin="0,3,0,0">
-                                <Run Text="Weekly: " Foreground="{StaticResource TextSecondaryBrush}" /><Run Text="{Binding SelectedProfile.Usage.WeeklyPercentage, StringFormat={}{0:F0}%, Mode=OneWay}" Foreground="{Binding SelectedProfile.Usage.WeeklyPercentage, Converter={StaticResource PercentToColor}}" />
+                            <TextBlock HorizontalAlignment="Center" FontSize="14" Margin="0,8,0,0">
+                                <Run Text="Weekly: " Foreground="{StaticResource TextSecondaryBrush}" /><Run Text="{Binding SelectedProfile.Usage.WeeklyPercentage, Converter={StaticResource PercentToText}, Mode=OneWay}" Foreground="{Binding SelectedProfile.Usage.WeeklyPercentage, Converter={StaticResource PercentToColor}}" />
                             </TextBlock>
 
                             <!-- Reset times -->
@@ -195,7 +182,7 @@
                                                         Converter={StaticResource PercentToColor}}" />
                                     </Style>
                                 </TextBlock.Style>
-                                <Run Text="~" /><Run Text="{Binding SelectedProfile.Usage.EstimatedPercentage, StringFormat={}{0:F0}%, Mode=OneWay}" /><Run Text=" Est." />
+                                <Run Text="{Binding SelectedProfile.Usage.EstimatedPercentage, Converter={StaticResource PercentToText}, ConverterParameter='~', Mode=OneWay}" /><Run Text=" Est." />
                             </TextBlock>
 
                             <TextBlock HorizontalAlignment="Center"
