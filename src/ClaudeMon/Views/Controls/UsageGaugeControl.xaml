@@ -20,7 +20,7 @@
                    Width="120" Height="120"
                    Stretch="Uniform"
                    Visibility="Collapsed"
-                   RenderOptions.BitmapScalingMode="NearestNeighbor" />
+                   RenderOptions.BitmapScalingMode="HighQuality" />
 
             <!-- Foreground arc: drawn in code-behind -->
             <Path x:Name="ArcPath"

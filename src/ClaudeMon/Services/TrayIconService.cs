@@ -81,7 +81,7 @@ public class TrayIconService : IDisposable
         var faceBmp = LoadFaceFromFile(facePath);
         var bitmap = new System.Drawing.Bitmap(size, size, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
         using var g = System.Drawing.Graphics.FromImage(bitmap);
-        g.InterpolationMode = InterpolationMode.NearestNeighbor;
+        g.InterpolationMode = InterpolationMode.HighQualityBicubic;
         g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.Half;
         g.Clear(System.Drawing.Color.Transparent);
         g.DrawImage(faceBmp, 0, 0, size, size);
