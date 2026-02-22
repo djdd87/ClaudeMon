@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -37,6 +38,8 @@ public partial class ProfileViewModel : ObservableObject, IDisposable
 
     [ObservableProperty]
     private System.Windows.Media.ImageSource? _gaugeImageSource;
+
+    public ObservableCollection<MetricCardViewModel> ActiveMetrics { get; } = [];
 
     public event Action<ProfileViewModel>? TrayLeftClicked;
 
@@ -132,14 +135,21 @@ public partial class ProfileViewModel : ObservableObject, IDisposable
 
         UpdateThemeChecks();
 
+        // --- Metrics manager ---
+        var manageMetricsItem = new System.Windows.Controls.MenuItem { Header = "Manage Metrics..." };
+        manageMetricsItem.Click += (_, _) => mainVm.OpenMetricsManagerCommand.Execute(null);
+
         _mainVmPropertyChanged = (_, args) =>
         {
             if (args.PropertyName is nameof(MainViewModel.ThemeMode) or nameof(MainViewModel.ActiveCustomTheme))
                 Application.Current?.Dispatcher.Invoke(UpdateThemeChecks);
+            if (args.PropertyName == nameof(MainViewModel.EnabledMetricIds))
+                Application.Current?.Dispatcher.Invoke(() => RebuildMetrics(mainVm.EnabledMetricIds));
         };
         mainVm.PropertyChanged += _mainVmPropertyChanged;
 
         menu.Items.Add(themeMenu);
+        menu.Items.Add(manageMetricsItem);
         menu.Items.Add(new System.Windows.Controls.Separator());
 
         var exitItem = new System.Windows.Controls.MenuItem { Header = "Exit" };
@@ -153,7 +163,27 @@ public partial class ProfileViewModel : ObservableObject, IDisposable
 
         _themeService.ThemeChanged += OnThemeChanged;
 
+        RebuildMetrics(mainVm.EnabledMetricIds);
+
         _ = RefreshAsync();
+    }
+
+    private void RebuildMetrics(IEnumerable<string> enabledIds)
+    {
+        ActiveMetrics.Clear();
+        foreach (var id in enabledIds)
+        {
+            var def = MetricRegistry.Find(id);
+            if (def != null)
+                ActiveMetrics.Add(new MetricCardViewModel(def.Label, def.Hint, def.GetValue));
+        }
+        RefreshMetricValues();
+    }
+
+    private void RefreshMetricValues()
+    {
+        foreach (var metric in ActiveMetrics)
+            metric.Refresh(Usage);
     }
 
     /// <summary>
@@ -259,7 +289,9 @@ public partial class ProfileViewModel : ObservableObject, IDisposable
             }
 
             ComputeBurnRateMetrics(summary);
+            ComputeSessionRunway(summary);
             Usage.UpdateFrom(summary);
+            RefreshMetricValues();
 
             // Format tooltip
             var pctText = Usage.IsLive
@@ -382,6 +414,57 @@ public partial class ProfileViewModel : ObservableObject, IDisposable
         }
 
         summary.RunwayText = runwayDays < 1.0 ? "< 1 day" : $"~{runwayDays:F1} days";
+    }
+
+    internal static void ComputeSessionRunway(UsageSummary summary)
+    {
+        if (!summary.SessionResetsAt.HasValue || summary.SessionPercentage <= 0)
+        {
+            summary.SessionRunwayText = "—";
+            return;
+        }
+
+        double hoursUntilReset = (summary.SessionResetsAt.Value - DateTime.Now).TotalHours;
+        if (hoursUntilReset <= 0)
+        {
+            summary.SessionRunwayText = "—";
+            return;
+        }
+
+        const double sessionWindowHours = 5.0;
+        double hoursElapsed = sessionWindowHours - hoursUntilReset;
+        if (hoursElapsed <= 0)
+        {
+            summary.SessionRunwayText = "—";
+            return;
+        }
+
+        if (summary.SessionPercentage >= 99.5)
+        {
+            summary.SessionRunwayText = "At limit";
+            return;
+        }
+
+        double burnRatePerHour = summary.SessionPercentage / hoursElapsed;
+        double remaining = 100.0 - summary.SessionPercentage;
+        double hoursUntilLimit = remaining / burnRatePerHour;
+
+        if (hoursUntilLimit >= hoursUntilReset)
+        {
+            summary.SessionRunwayText = "Resets first";
+            return;
+        }
+
+        if (hoursUntilLimit < 1.0 / 60.0)
+            summary.SessionRunwayText = "< 1m";
+        else if (hoursUntilLimit < 1.0)
+            summary.SessionRunwayText = $"~{(int)(hoursUntilLimit * 60)}m";
+        else
+        {
+            int hours = (int)hoursUntilLimit;
+            int mins = (int)((hoursUntilLimit - hours) * 60);
+            summary.SessionRunwayText = mins > 0 ? $"~{hours}h {mins}m" : $"~{hours}h";
+        }
     }
 
     internal static string FormatBurnRate(long tokensPerDay)

@@ -152,6 +152,14 @@ public partial class UsageSummary : ObservableObject
     private string _runwayText = "—";
 
     /// <summary>
+    /// Estimated time until the 5-hour session limit is reached at the current session burn rate.
+    /// "Resets first" if the session window resets before the limit would be hit.
+    /// "—" if live API data is unavailable.
+    /// </summary>
+    [ObservableProperty]
+    private string _sessionRunwayText = "—";
+
+    /// <summary>
     /// Copies all property values from another summary into this instance.
     /// Fires PropertyChanged for each changed property, keeping WPF bindings in sync.
     /// </summary>
@@ -180,6 +188,7 @@ public partial class UsageSummary : ObservableObject
         WeeklyResetsAt = other.WeeklyResetsAt;
         DailyBurnRateText = other.DailyBurnRateText;
         RunwayText = other.RunwayText;
+        SessionRunwayText = other.SessionRunwayText;
     }
 }
 

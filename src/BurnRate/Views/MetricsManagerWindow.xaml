@@ -1,0 +1,176 @@
+<Window x:Class="BurnRate.Views.MetricsManagerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:BurnRate.ViewModels"
+        Title="Manage Metrics"
+        Width="300"
+        SizeToContent="Height"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        Topmost="True">
+
+    <Window.Resources>
+        <!-- Small icon button used for ↑ ↓ ✕ + actions -->
+        <Style x:Key="IconButton" TargetType="Button">
+            <Setter Property="Width" Value="24" />
+            <Setter Property="Height" Value="24" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bg"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="3">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bg" Property="Background" Value="{DynamicResource BgCardHoverBrush}" />
+                                <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Border CornerRadius="8"
+            Background="{DynamicResource BgPrimaryBrush}"
+            Margin="10">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="20"
+                              ShadowDepth="2"
+                              Opacity="0.6"
+                              Color="Black" />
+        </Border.Effect>
+
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <!-- Title bar -->
+            <Border Grid.Row="0"
+                    Background="{DynamicResource BgSecondaryBrush}"
+                    CornerRadius="8,8,0,0"
+                    Padding="16,10"
+                    MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+                <DockPanel>
+                    <Button DockPanel.Dock="Right"
+                            Style="{StaticResource CloseButton}"
+                            Click="CloseButton_Click"
+                            VerticalAlignment="Center" />
+                    <TextBlock Text="Manage Metrics"
+                               Style="{StaticResource HeaderText}"
+                               FontSize="15"
+                               VerticalAlignment="Center" />
+                </DockPanel>
+            </Border>
+
+            <!-- Content -->
+            <StackPanel Grid.Row="1" Margin="16,12,16,16">
+
+                <!-- Active section -->
+                <TextBlock Text="ACTIVE" Style="{StaticResource SectionHeader}" />
+
+                <ItemsControl ItemsSource="{Binding EnabledMetrics}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type vm:MetricListItem}">
+                            <Border Padding="4,3" Margin="0,1">
+                                <DockPanel>
+                                    <StackPanel DockPanel.Dock="Right"
+                                                Orientation="Horizontal"
+                                                Margin="6,0,0,0">
+                                        <Button Style="{StaticResource IconButton}"
+                                                ToolTip="Move up"
+                                                Command="{Binding DataContext.MoveUpCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                CommandParameter="{Binding}">
+                                            <TextBlock Text="▲" FontSize="9" />
+                                        </Button>
+                                        <Button Style="{StaticResource IconButton}"
+                                                ToolTip="Move down"
+                                                Margin="2,0,0,0"
+                                                Command="{Binding DataContext.MoveDownCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                CommandParameter="{Binding}">
+                                            <TextBlock Text="▼" FontSize="9" />
+                                        </Button>
+                                        <Button Style="{StaticResource IconButton}"
+                                                ToolTip="Remove"
+                                                Margin="6,0,0,0"
+                                                Command="{Binding DataContext.RemoveCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                CommandParameter="{Binding}">
+                                            <TextBlock Text="✕" FontSize="10" />
+                                        </Button>
+                                    </StackPanel>
+                                    <TextBlock Text="{Binding Label}"
+                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                               FontSize="12"
+                                               FontWeight="SemiBold"
+                                               VerticalAlignment="Center"
+                                               ToolTip="{Binding Hint}" />
+                                </DockPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <!-- Available section (hidden when all metrics are active) -->
+                <StackPanel>
+                    <StackPanel.Style>
+                        <Style TargetType="StackPanel">
+                            <Setter Property="Visibility" Value="Visible" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding AvailableMetrics.Count}" Value="0">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </StackPanel.Style>
+
+                    <TextBlock Text="AVAILABLE"
+                               Style="{StaticResource SectionHeader}"
+                               Margin="0,16,0,8" />
+
+                    <ItemsControl ItemsSource="{Binding AvailableMetrics}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type vm:MetricListItem}">
+                                <Border Padding="4,3" Margin="0,1">
+                                    <DockPanel>
+                                        <Button DockPanel.Dock="Right"
+                                                Style="{StaticResource IconButton}"
+                                                Width="28"
+                                                ToolTip="Add"
+                                                Command="{Binding DataContext.AddCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                CommandParameter="{Binding}">
+                                            <TextBlock Text="+"
+                                                       FontSize="14"
+                                                       FontWeight="Bold" />
+                                        </Button>
+                                        <TextBlock Text="{Binding Label}"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                   FontSize="12"
+                                                   VerticalAlignment="Center"
+                                                   ToolTip="{Binding Hint}" />
+                                    </DockPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+
+            </StackPanel>
+        </Grid>
+    </Border>
+</Window>

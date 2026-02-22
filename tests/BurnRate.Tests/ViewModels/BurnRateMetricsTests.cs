@@ -221,4 +221,96 @@ public class BurnRateMetricsTests
         Assert.NotEqual("—", summary.DailyBurnRateText);
         Assert.NotEmpty(summary.RunwayText);
     }
+
+    // ── Session Runway ────────────────────────────────────────────────────────
+
+    private static UsageSummary BuildSessionSummary(
+        double sessionPercentage,
+        double hoursUntilReset)
+    {
+        return new UsageSummary
+        {
+            SessionPercentage = sessionPercentage,
+            SessionResetsAt = hoursUntilReset > 0
+                ? DateTime.Now.AddHours(hoursUntilReset)
+                : (DateTime?)null
+        };
+    }
+
+    [Fact]
+    public void SessionRunway_NoLiveData_ReturnsDash()
+    {
+        var summary = new UsageSummary { SessionPercentage = 0 };
+        ProfileViewModel.ComputeSessionRunway(summary);
+        Assert.Equal("—", summary.SessionRunwayText);
+    }
+
+    [Fact]
+    public void SessionRunway_ZeroPercentage_ReturnsDash()
+    {
+        var summary = BuildSessionSummary(sessionPercentage: 0, hoursUntilReset: 3);
+        ProfileViewModel.ComputeSessionRunway(summary);
+        Assert.Equal("—", summary.SessionRunwayText);
+    }
+
+    [Fact]
+    public void SessionRunway_AtLimit_ReturnsAtLimit()
+    {
+        // 99.5% or more = at limit
+        var summary = BuildSessionSummary(sessionPercentage: 100, hoursUntilReset: 2);
+        ProfileViewModel.ComputeSessionRunway(summary);
+        Assert.Equal("At limit", summary.SessionRunwayText);
+    }
+
+    [Fact]
+    public void SessionRunway_ResetsSooner_ReturnsResetsFirst()
+    {
+        // 2h elapsed (resets in 3h), 20% used → burn = 10%/h, remaining 80% → 8h to limit
+        // 8h > 3h until reset → "Resets first"
+        var summary = BuildSessionSummary(sessionPercentage: 20, hoursUntilReset: 3);
+        ProfileViewModel.ComputeSessionRunway(summary);
+        Assert.Equal("Resets first", summary.SessionRunwayText);
+    }
+
+    [Fact]
+    public void SessionRunway_LimitReachedInMinutes_ShowsMinutes()
+    {
+        // 4h elapsed (resets in 1h), 80% used → burn = 20%/h, remaining 20% → 1h to limit
+        // 1h >= 1h until reset → "Resets first"
+        // Use higher burn: 4h elapsed, 96% used → burn = 24%/h, remaining 4% → 0.167h = 10m to limit
+        // 0.167h < 1h until reset → show "~10m"
+        var summary = BuildSessionSummary(sessionPercentage: 96, hoursUntilReset: 1);
+        ProfileViewModel.ComputeSessionRunway(summary);
+        Assert.Equal("~10m", summary.SessionRunwayText);
+    }
+
+    [Fact]
+    public void SessionRunway_LimitReachedInHours_ShowsHoursAndMinutes()
+    {
+        // 1h elapsed (resets in 4h), 30% used → burn = 30%/h, remaining 70% → 2.333h = 2h 20m
+        // 2.333h < 4h until reset → show "~2h 20m"
+        var summary = BuildSessionSummary(sessionPercentage: 30, hoursUntilReset: 4);
+        ProfileViewModel.ComputeSessionRunway(summary);
+        Assert.Equal("~2h 20m", summary.SessionRunwayText);
+    }
+
+    [Fact]
+    public void SessionRunway_LimitReachedInExactHours_OmitsMinutes()
+    {
+        // 1h elapsed (resets in 4h), 25% used → burn = 25%/h, remaining 75% → exactly 3h
+        // 3h < 4h until reset → show "~3h"
+        var summary = BuildSessionSummary(sessionPercentage: 25, hoursUntilReset: 4);
+        ProfileViewModel.ComputeSessionRunway(summary);
+        Assert.Equal("~3h", summary.SessionRunwayText);
+    }
+
+    [Fact]
+    public void SessionRunway_JustReset_HoursElapsedNearZero_ExtrapolatesCorrectly()
+    {
+        // Reset in 4.999h → only 0.001h elapsed, 10% used → burn = 10,000%/h
+        // remaining 90% / 10,000%/h = 0.009h < 1m → "< 1m"
+        var summary = BuildSessionSummary(sessionPercentage: 10, hoursUntilReset: 4.999);
+        ProfileViewModel.ComputeSessionRunway(summary);
+        Assert.Equal("< 1m", summary.SessionRunwayText);
+    }
 }

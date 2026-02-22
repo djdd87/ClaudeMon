@@ -1,5 +1,6 @@
 using System.IO;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.Win32;
 using BurnRate.Models;
 
@@ -12,6 +13,7 @@ public sealed class ThemeService : IDisposable
     private AppThemeMode _currentMode = AppThemeMode.Dark;
     private AppThemeMode _effectiveTheme = AppThemeMode.Dark;
     private CustomTheme? _activeCustomTheme;
+    private List<string> _enabledMetricIds = [];
     private bool _disposed;
 
     public event Action<AppThemeMode>? ThemeChanged;
@@ -19,14 +21,16 @@ public sealed class ThemeService : IDisposable
     public AppThemeMode CurrentMode => _currentMode;
     public AppThemeMode EffectiveTheme => _effectiveTheme;
     public CustomTheme? ActiveCustomTheme => _activeCustomTheme;
+    public IReadOnlyList<string> EnabledMetricIds => _enabledMetricIds;
 
     public void Initialize(IReadOnlyList<CustomTheme> available)
     {
-        var (mode, customThemeId) = LoadSetting();
-        _currentMode = mode;
+        var settings = LoadSettings();
+        _currentMode = settings.Mode;
+        _enabledMetricIds = settings.EnabledMetrics.ToList();
 
-        if (mode == AppThemeMode.Custom && customThemeId != null)
-            _activeCustomTheme = available.FirstOrDefault(t => t.Id == customThemeId);
+        if (settings.Mode == AppThemeMode.Custom && settings.CustomThemeId != null)
+            _activeCustomTheme = available.FirstOrDefault(t => t.Id == settings.CustomThemeId);
 
         ApplyTheme();
         SystemEvents.UserPreferenceChanged += OnUserPreferenceChanged;
@@ -47,6 +51,12 @@ public sealed class ThemeService : IDisposable
         _currentMode = AppThemeMode.Custom;
         SaveSetting();
         ApplyTheme();
+    }
+
+    public void SetEnabledMetrics(IEnumerable<string> ids)
+    {
+        _enabledMetricIds = ids.ToList();
+        SaveSetting();
     }
 
     private void ApplyTheme()
@@ -103,37 +113,65 @@ public sealed class ThemeService : IDisposable
             "BurnRate",
             "settings.json");
 
-    private static (AppThemeMode mode, string? customThemeId) LoadSetting()
+    private sealed class PersistedSettings
+    {
+        public string Theme { get; set; } = "Dark";
+        public string? CustomTheme { get; set; }
+        public string[]? EnabledMetrics { get; set; }
+    }
+
+    private sealed record LoadedSettings(AppThemeMode Mode, string? CustomThemeId, IReadOnlyList<string> EnabledMetrics);
+
+    private static LoadedSettings LoadSettings()
     {
         try
         {
             var path = SettingsPath;
-            if (!File.Exists(path)) return (AppThemeMode.Dark, null);
+            if (!File.Exists(path)) return new(AppThemeMode.Dark, null, MetricRegistry.DefaultEnabled);
+
             var json = File.ReadAllText(path);
             using var doc = JsonDocument.Parse(json);
             var root = doc.RootElement;
 
-            if (!root.TryGetProperty("Theme", out var themeProp))
-                return (AppThemeMode.Dark, null);
-
-            var themeStr = themeProp.GetString();
-
-            // Legacy migration: "Doom" was a built-in enum value, now it's a custom theme
-            if (themeStr == "Doom")
-                return (AppThemeMode.Custom, "Doom");
-
-            if (!Enum.TryParse<AppThemeMode>(themeStr, out var mode))
-                return (AppThemeMode.Dark, null);
-
+            // Theme
+            AppThemeMode mode = AppThemeMode.Dark;
             string? customId = null;
-            if (mode == AppThemeMode.Custom && root.TryGetProperty("CustomTheme", out var ctProp))
-                customId = ctProp.GetString();
 
-            return (mode, customId);
+            if (root.TryGetProperty("Theme", out var themeProp))
+            {
+                var themeStr = themeProp.GetString();
+
+                // Legacy migration: "Doom" was a built-in enum value, now it's a custom theme
+                if (themeStr == "Doom")
+                {
+                    mode = AppThemeMode.Custom;
+                    customId = "Doom";
+                }
+                else if (Enum.TryParse<AppThemeMode>(themeStr, out var parsedMode))
+                {
+                    mode = parsedMode;
+                    if (mode == AppThemeMode.Custom && root.TryGetProperty("CustomTheme", out var ctProp))
+                        customId = ctProp.GetString();
+                }
+            }
+
+            // Metrics
+            List<string> metrics = [];
+            if (root.TryGetProperty("EnabledMetrics", out var metricsProp) &&
+                metricsProp.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var item in metricsProp.EnumerateArray())
+                {
+                    var id = item.GetString();
+                    if (id != null) metrics.Add(id);
+                }
+            }
+
+            return new(mode, customId, metrics.Count > 0 ? metrics : MetricRegistry.DefaultEnabled);
         }
         catch
         {
-            return (AppThemeMode.Dark, null);
+            return new(AppThemeMode.Dark, null, MetricRegistry.DefaultEnabled);
         }
     }
 
@@ -144,11 +182,17 @@ public sealed class ThemeService : IDisposable
             var path = SettingsPath;
             Directory.CreateDirectory(Path.GetDirectoryName(path)!);
 
-            object payload = _currentMode == AppThemeMode.Custom && _activeCustomTheme != null
-                ? new { Theme = _currentMode.ToString(), CustomTheme = _activeCustomTheme.Id }
-                : new { Theme = _currentMode.ToString() };
+            var settings = new PersistedSettings
+            {
+                Theme = _currentMode.ToString(),
+                CustomTheme = _currentMode == AppThemeMode.Custom ? _activeCustomTheme?.Id : null,
+                EnabledMetrics = _enabledMetricIds.ToArray()
+            };
 
-            var json = JsonSerializer.Serialize(payload);
+            var json = JsonSerializer.Serialize(settings, new JsonSerializerOptions
+            {
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+            });
             File.WriteAllText(path, json);
         }
         catch { }

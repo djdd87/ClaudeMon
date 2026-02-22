@@ -13,6 +13,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
 {
     private readonly ThemeService _themeService;
     private MainWindow? _mainWindow;
+    private MetricsManagerWindow? _metricsManagerWindow;
     private bool _disposed;
 
     [ObservableProperty]
@@ -41,6 +42,12 @@ public partial class MainViewModel : ObservableObject, IDisposable
     /// </summary>
     public UsageSummary? Usage => SelectedProfile?.Usage;
 
+    /// <summary>
+    /// The ordered list of metric IDs currently enabled for display on the dashboard.
+    /// Persisted to settings.json via ThemeService.
+    /// </summary>
+    public IReadOnlyList<string> EnabledMetricIds => _themeService.EnabledMetricIds;
+
     public MainViewModel(ThemeService themeService, IReadOnlyList<CustomTheme>? customThemes = null)
     {
         _themeService = themeService;
@@ -67,6 +74,43 @@ public partial class MainViewModel : ObservableObject, IDisposable
     private void OnThemeServiceChanged(AppThemeMode effectiveTheme)
     {
         EffectiveTheme = effectiveTheme;
+    }
+
+    [RelayCommand]
+    private void ToggleMetric(string id)
+    {
+        var current = _themeService.EnabledMetricIds.ToList();
+        if (current.Contains(id))
+            current.Remove(id);
+        else
+            current.Add(id);
+        _themeService.SetEnabledMetrics(current);
+        OnPropertyChanged(nameof(EnabledMetricIds));
+    }
+
+    public void SetEnabledMetrics(IEnumerable<string> orderedIds)
+    {
+        _themeService.SetEnabledMetrics(orderedIds);
+        OnPropertyChanged(nameof(EnabledMetricIds));
+    }
+
+    [RelayCommand]
+    private void OpenMetricsManager()
+    {
+        if (_metricsManagerWindow?.IsVisible == true)
+        {
+            _metricsManagerWindow.Activate();
+            return;
+        }
+        _metricsManagerWindow = new MetricsManagerWindow
+        {
+            DataContext = new MetricsManagerViewModel(this)
+        };
+        _metricsManagerWindow.Closed += (_, _) => _metricsManagerWindow = null;
+        _metricsManagerWindow.Show();
+        _metricsManagerWindow.UpdateLayout();
+        WindowPositioner.PositionNearTray(_metricsManagerWindow);
+        _metricsManagerWindow.Activate();
     }
 
     [RelayCommand]
