@@ -209,6 +209,7 @@ public partial class ProfileViewModel : ObservableObject, IDisposable
                     $"[{ProfileName}] Live API failed (using estimates): {liveEx.Message}");
             }
 
+            ComputeBurnRateMetrics(summary);
             Usage.UpdateFrom(summary);
 
             // Format tooltip
@@ -280,6 +281,67 @@ public partial class ProfileViewModel : ObservableObject, IDisposable
     private void OnThemeChanged(AppThemeMode _)
     {
         Application.Current?.Dispatcher.InvokeAsync(async () => await RefreshAsync());
+    }
+
+    internal static void ComputeBurnRateMetrics(UsageSummary summary)
+    {
+        double daysElapsed;
+        if (summary.WeeklyResetsAt.HasValue)
+        {
+            // Window is 7 days; elapsed = 7 minus how many days remain
+            daysElapsed = Math.Max(1.0, 7.0 - (summary.WeeklyResetsAt.Value - DateTime.Now).TotalDays);
+        }
+        else
+        {
+            // Fallback: count days that had any token activity
+            daysElapsed = Math.Max(1.0, summary.DailyActivity.Count(d => d.Tokens > 0));
+        }
+
+        if (summary.WeeklyTokensUsed <= 0)
+        {
+            summary.DailyBurnRateText = "—";
+            summary.RunwayText = "—";
+            return;
+        }
+
+        long dailyBurnRate = (long)(summary.WeeklyTokensUsed / daysElapsed);
+        summary.DailyBurnRateText = FormatBurnRate(dailyBurnRate);
+
+        if (dailyBurnRate <= 0 || summary.WeeklyTokenLimit <= 0)
+        {
+            summary.RunwayText = "—";
+            return;
+        }
+
+        long remaining = summary.WeeklyTokenLimit - summary.WeeklyTokensUsed;
+        if (remaining <= 0)
+        {
+            summary.RunwayText = "At limit";
+            return;
+        }
+
+        double runwayDays = remaining / (double)dailyBurnRate;
+
+        if (summary.WeeklyResetsAt.HasValue)
+        {
+            double daysUntilReset = (summary.WeeklyResetsAt.Value - DateTime.Now).TotalDays;
+            if (runwayDays >= daysUntilReset)
+            {
+                summary.RunwayText = "Resets first";
+                return;
+            }
+        }
+
+        summary.RunwayText = runwayDays < 1.0 ? "< 1 day" : $"~{runwayDays:F1} days";
+    }
+
+    internal static string FormatBurnRate(long tokensPerDay)
+    {
+        if (tokensPerDay >= 1_000_000)
+            return $"{tokensPerDay / 1_000_000.0:F1}M/day";
+        if (tokensPerDay >= 1_000)
+            return $"{tokensPerDay / 1_000.0:F0}K/day";
+        return $"{tokensPerDay}/day";
     }
 
     private static string FormatPct(double percentage) =>

@@ -13,6 +13,10 @@ public partial class StatCard : UserControl
         DependencyProperty.Register(nameof(Value), typeof(string), typeof(StatCard),
             new PropertyMetadata(string.Empty));
 
+    public static readonly DependencyProperty HintProperty =
+        DependencyProperty.Register(nameof(Hint), typeof(string), typeof(StatCard),
+            new PropertyMetadata(string.Empty));
+
     public string Label
     {
         get => (string)GetValue(LabelProperty);
@@ -23,6 +27,12 @@ public partial class StatCard : UserControl
     {
         get => (string)GetValue(ValueProperty);
         set => SetValue(ValueProperty, value);
+    }
+
+    public string Hint
+    {
+        get => (string)GetValue(HintProperty);
+        set => SetValue(HintProperty, value);
     }
 
     public StatCard()

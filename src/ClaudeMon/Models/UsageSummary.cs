@@ -136,6 +136,21 @@ public partial class UsageSummary : ObservableObject
     [ObservableProperty]
     private DateTime? _weeklyResetsAt;
 
+    // ── Burn rate metrics ──
+
+    /// <summary>
+    /// Average tokens consumed per day in the current window, formatted for display (e.g. "450K/day").
+    /// </summary>
+    [ObservableProperty]
+    private string _dailyBurnRateText = "—";
+
+    /// <summary>
+    /// Estimated days until the weekly token limit is reached at the current burn rate.
+    /// "Resets first" if the window resets before the limit would be hit. "—" if no data.
+    /// </summary>
+    [ObservableProperty]
+    private string _runwayText = "—";
+
     /// <summary>
     /// Copies all property values from another summary into this instance.
     /// Fires PropertyChanged for each changed property, keeping WPF bindings in sync.
@@ -163,6 +178,8 @@ public partial class UsageSummary : ObservableObject
         SessionResetsAt = other.SessionResetsAt;
         WeeklyPercentage = other.WeeklyPercentage;
         WeeklyResetsAt = other.WeeklyResetsAt;
+        DailyBurnRateText = other.DailyBurnRateText;
+        RunwayText = other.RunwayText;
     }
 }
 

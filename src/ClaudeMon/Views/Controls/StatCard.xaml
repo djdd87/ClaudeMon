@@ -5,7 +5,9 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d">
 
-    <Border Style="{StaticResource CardBorder}" MinWidth="170">
+    <Border Style="{StaticResource CardBorder}" MinWidth="170"
+            ToolTip="{Binding Hint, RelativeSource={RelativeSource AncestorType=UserControl}}"
+            >
         <StackPanel>
             <TextBlock Text="{Binding Label, RelativeSource={RelativeSource AncestorType=UserControl}}"
                        Style="{StaticResource LabelText}"
