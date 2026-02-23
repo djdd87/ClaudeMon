@@ -33,22 +33,17 @@ If you find BurnRate useful, consider buying me a coffee!
 - **System tray icons** — one per Claude profile, showing your current usage percentage with color-coded status (green/amber/red)
 - **Live usage data** — pulls real-time 5-hour session and 7-day weekly utilization from the Anthropic API
 - **Multi-profile support** — auto-discovers all `~/.claude*` profiles or configure them explicitly
-- **Dashboard popup** — click the tray icon to see:
-  - Circular usage gauge
-  - Today's messages, output tokens, and sessions
-  - Weekly token usage
-  - 7-day activity chart
-  - Model breakdown (tokens per model)
-  - Estimated cost and time saved from speculative execution
+- **Dashboard popup** — click the tray icon to see a circular usage gauge, 7-day activity chart, model token breakdown, and a set of configurable metric cards
+- **Configurable metrics** — choose which stats appear on the dashboard via the Manage Metrics menu; available cards include today's messages/tokens/sessions, weekly tokens, daily burn rate, weekly and session runway, estimated cost, time saved, and lifetime totals
 - **Near-instant updates** — file system watcher detects changes as they happen, with a poll timer as fallback
 
 ## How It Works
 
 BurnRate reads data from three sources:
 
-1. **JSONL conversation files** (`~/.claude*/projects/**/*.jsonl`) — scanned directly for current-day stats like messages, tokens, and sessions
+1. **JSONL conversation files** (`~/.claude*/projects/**/*.jsonl`) — scanned directly for current-day and 7-day stats: messages, output tokens, sessions, and model breakdown
 2. **stats-cache.json** — Claude Code's periodic aggregate, used for lifetime totals and cost estimates
-3. **Anthropic API** (`/api/oauth/usage`) — the authoritative source for rate-limit utilization percentages and reset times
+3. **Anthropic API** (`/api/oauth/usage`) — the authoritative source for rate-limit utilization percentages and reset times; also used to derive the real weekly token limit for burn rate and runway calculations
 
 The app passively reads your existing Claude Code OAuth token for API access — it never writes credentials or refreshes tokens.
 
@@ -77,11 +72,7 @@ Edit `src/BurnRate/appsettings.json`:
   "BurnRate": {
     "RefreshIntervalSeconds": 60,
     "Profiles": [],
-    "PlanLimits": {
-      "default_claude_max_5x": 450000,
-      "default_claude_max_20x": 1800000,
-      "pro": 100000
-    }
+    "PlanLimits": {}
   }
 }
 ```
@@ -90,19 +81,24 @@ Edit `src/BurnRate/appsettings.json`:
 |---------|-------------|
 | `RefreshIntervalSeconds` | How often to poll for changes (default: 60s). File watcher provides faster updates between polls. |
 | `Profiles` | Leave empty for auto-discovery, or set explicitly: `[{"Name": "Work", "Path": "C:\\Users\\you\\.claude-work"}]` |
-| `PlanLimits` | Maps Claude plan tier IDs to weekly output token limits. Used for estimated usage percentage when the live API is unavailable. |
+| `PlanLimits` | Optional fallback mapping plan tier IDs to weekly output token limits, used only when the live API is unavailable. Empty by default — the live API provides accurate limits for all known plans. |
 
 ## Supported Plans
 
-BurnRate recognizes these Claude plan tiers:
+BurnRate recognises these Claude plan tiers and displays a friendly name in the dashboard and tray tooltip:
 
-| Plan | Tier ID |
-|------|---------|
-| Pro | `pro`, `default_claude_ai` |
-| Max 5x | `default_claude_max_5x` |
-| Max 20x | `default_claude_max_20x` |
-| Standard | `default_raven` |
-| Team variants | Above tiers with `team` subscription type |
+| Display name | Tier ID | Subscription type |
+|---|---|---|
+| Pro | `pro` or `default_claude_ai` | (any) |
+| Max 5x | `default_claude_max_5x` | — |
+| Max 20x | `default_claude_max_20x` | — |
+| Standard | `default_raven` | — |
+| Team Pro | `pro` or `default_claude_ai` | `team` |
+| Team Premium | `default_claude_max_5x` | `team` |
+| Team Premium 20x | `default_claude_max_20x` | `team` |
+| Team Standard | `default_raven` | `team` |
+
+Unrecognised tiers are displayed with automatic formatting (underscores replaced, common prefixes stripped).
 
 ## Building
 
