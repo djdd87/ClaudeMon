@@ -172,7 +172,14 @@ public sealed class ThemeService : IDisposable
                 }
             }
 
-            return new(mode, customId, metrics.Count > 0 ? metrics : MetricRegistry.DefaultEnabled);
+            if (metrics.Count == 0)
+                return new(mode, customId, MetricRegistry.DefaultEnabled);
+
+            // Auto-enable "UsageLimits" for existing users who saved settings before it existed.
+            if (!metrics.Contains("UsageLimits"))
+                metrics.Insert(0, "UsageLimits");
+
+            return new(mode, customId, metrics);
         }
         catch (Exception ex)
         {

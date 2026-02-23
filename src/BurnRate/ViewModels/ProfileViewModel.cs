@@ -174,6 +174,7 @@ public partial class ProfileViewModel : ObservableObject, IDisposable
         ActiveMetrics.Clear();
         foreach (var id in enabledIds)
         {
+            if (id == "UsageLimits") continue; // section toggle, not a card
             var def = MetricRegistry.Find(id);
             if (def != null)
                 ActiveMetrics.Add(new MetricCardViewModel(def.Label, def.Hint, def.GetValue));
@@ -288,6 +289,25 @@ public partial class ProfileViewModel : ObservableObject, IDisposable
                         if (liveUsage.SevenDay.Utilization > 0 && summary.WeeklyTokensUsed > 0)
                             summary.WeeklyTokenLimit = (long)Math.Round(
                                 summary.WeeklyTokensUsed / (liveUsage.SevenDay.Utilization / 100.0));
+                    }
+
+                    if (liveUsage.SevenDaySonnet != null)
+                    {
+                        summary.SonnetPercentage = liveUsage.SevenDaySonnet.Utilization;
+                        System.Diagnostics.Debug.WriteLine(
+                            $"[{ProfileName}] Live 7d Sonnet: {liveUsage.SevenDaySonnet.Utilization:F1}%, resets: {liveUsage.SevenDaySonnet.ResetsAt}");
+                        if (DateTime.TryParse(liveUsage.SevenDaySonnet.ResetsAt, null,
+                                System.Globalization.DateTimeStyles.RoundtripKind, out var sonnetReset))
+                            summary.SonnetResetsAt = sonnetReset.ToLocalTime();
+                    }
+
+                    if (liveUsage.ExtraUsage != null)
+                    {
+                        summary.ExtraUsageEnabled = liveUsage.ExtraUsage.IsEnabled == true;
+                        summary.ExtraUsagePercentage = liveUsage.ExtraUsage.Utilization ?? -1;
+                        summary.ExtraUsageUsed = liveUsage.ExtraUsage.UsedCredits ?? 0;
+                        summary.ExtraUsageLimit = liveUsage.ExtraUsage.MonthlyLimit ?? 0;
+                        summary.ExtraUsageCurrency = liveUsage.ExtraUsage.Currency ?? "USD";
                     }
 
                     // Use the live session percentage as the primary gauge/icon metric

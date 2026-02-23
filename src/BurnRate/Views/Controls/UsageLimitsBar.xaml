@@ -1,0 +1,82 @@
+<UserControl x:Class="BurnRate.Views.Controls.UsageLimitsBar"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DesignWidth="320" d:DesignHeight="200">
+
+    <Border Style="{StaticResource CardBorder}">
+        <StackPanel>
+            <!-- Section header -->
+            <TextBlock Text="USAGE LIMITS"
+                       Style="{StaticResource SectionHeader}" />
+
+            <!-- Usage limit bar items -->
+            <ItemsControl ItemsSource="{Binding BarItems, RelativeSource={RelativeSource AncestorType=UserControl}}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Margin="0,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="80" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="46" />
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Label -->
+                            <TextBlock Grid.Column="0"
+                                       Text="{Binding Label}"
+                                       FontSize="11"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                       VerticalAlignment="Center"
+                                       ToolTip="{Binding Tooltip}" />
+
+                            <!-- Bar track with proportional fill -->
+                            <ProgressBar Grid.Column="1"
+                                         Margin="6,0"
+                                         VerticalAlignment="Center"
+                                         Height="8"
+                                         Minimum="0"
+                                         Maximum="100"
+                                         Value="{Binding Percentage}"
+                                         Foreground="{Binding BarBrush}"
+                                         Background="{DynamicResource GaugeTrackBrush}"
+                                         BorderThickness="0"
+                                         ToolTip="{Binding Tooltip}">
+                                <ProgressBar.Template>
+                                    <ControlTemplate TargetType="ProgressBar">
+                                        <Border Background="{TemplateBinding Background}"
+                                                CornerRadius="3"
+                                                x:Name="PART_Track">
+                                            <Grid x:Name="PART_Indicator" HorizontalAlignment="Left">
+                                                <Border Background="{TemplateBinding Foreground}"
+                                                        CornerRadius="3" />
+                                            </Grid>
+                                        </Border>
+                                    </ControlTemplate>
+                                </ProgressBar.Template>
+                            </ProgressBar>
+
+                            <!-- Percentage label -->
+                            <TextBlock Grid.Column="2"
+                                       FontSize="11"
+                                       Foreground="{DynamicResource TextMutedBrush}"
+                                       VerticalAlignment="Center"
+                                       HorizontalAlignment="Right">
+                                <TextBlock.Text>
+                                    <Binding Path="Percentage" StringFormat="{}{0:0}%" />
+                                </TextBlock.Text>
+                            </TextBlock>
+                        </Grid>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <!-- Reset times -->
+            <TextBlock HorizontalAlignment="Center" FontSize="10"
+                       Foreground="{DynamicResource TextMutedBrush}" Margin="0,6,0,0">
+                <Run Text="Session resets " /><Run Text="{Binding Usage.SessionResetsAt, RelativeSource={RelativeSource AncestorType=UserControl}, StringFormat={}{0:h:mm tt}, Mode=OneWay, TargetNullValue='—'}" /><Run Text="  ·  Wk resets " /><Run Text="{Binding Usage.WeeklyResetsAt, RelativeSource={RelativeSource AncestorType=UserControl}, StringFormat={}{0:MMM dd h:mm tt}, Mode=OneWay, TargetNullValue='—'}" />
+            </TextBlock>
+        </StackPanel>
+    </Border>
+</UserControl>

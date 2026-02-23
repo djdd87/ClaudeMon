@@ -136,6 +136,52 @@ public partial class UsageSummary : ObservableObject
     [ObservableProperty]
     private DateTime? _weeklyResetsAt;
 
+    // ── Sonnet-specific live API data ──
+
+    /// <summary>
+    /// 7-day Sonnet-specific utilization (0-100). From live API.
+    /// </summary>
+    [ObservableProperty]
+    private double _sonnetPercentage = -1;
+
+    /// <summary>
+    /// When the 7-day Sonnet window resets.
+    /// </summary>
+    [ObservableProperty]
+    private DateTime? _sonnetResetsAt;
+
+    // ── Extra Usage live API data ──
+
+    /// <summary>
+    /// Whether extra usage (spend) tracking is enabled for this account.
+    /// </summary>
+    [ObservableProperty]
+    private bool _extraUsageEnabled;
+
+    /// <summary>
+    /// Extra usage utilization (0-100). From live API.
+    /// </summary>
+    [ObservableProperty]
+    private double _extraUsagePercentage = -1;
+
+    /// <summary>
+    /// Credits used in the current extra usage period.
+    /// </summary>
+    [ObservableProperty]
+    private double _extraUsageUsed;
+
+    /// <summary>
+    /// Monthly credit limit for extra usage.
+    /// </summary>
+    [ObservableProperty]
+    private double _extraUsageLimit;
+
+    /// <summary>
+    /// Currency code for extra usage (e.g. "USD").
+    /// </summary>
+    [ObservableProperty]
+    private string _extraUsageCurrency = "USD";
+
     // ── Burn rate metrics ──
 
     /// <summary>
@@ -186,6 +232,13 @@ public partial class UsageSummary : ObservableObject
         SessionResetsAt = other.SessionResetsAt;
         WeeklyPercentage = other.WeeklyPercentage;
         WeeklyResetsAt = other.WeeklyResetsAt;
+        SonnetPercentage = other.SonnetPercentage;
+        SonnetResetsAt = other.SonnetResetsAt;
+        ExtraUsageEnabled = other.ExtraUsageEnabled;
+        ExtraUsagePercentage = other.ExtraUsagePercentage;
+        ExtraUsageUsed = other.ExtraUsageUsed;
+        ExtraUsageLimit = other.ExtraUsageLimit;
+        ExtraUsageCurrency = other.ExtraUsageCurrency;
         DailyBurnRateText = other.DailyBurnRateText;
         RunwayText = other.RunwayText;
         SessionRunwayText = other.SessionRunwayText;

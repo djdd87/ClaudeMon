@@ -48,6 +48,11 @@ public partial class MainViewModel : ObservableObject, IDisposable
     /// </summary>
     public IReadOnlyList<string> EnabledMetricIds => _themeService.EnabledMetricIds;
 
+    /// <summary>
+    /// Whether the "USAGE LIMITS" section is enabled in the metrics picker.
+    /// </summary>
+    public bool IsUsageLimitsSectionEnabled => EnabledMetricIds.Contains("UsageLimits");
+
     public MainViewModel(ThemeService themeService, IReadOnlyList<CustomTheme>? customThemes = null)
     {
         _themeService = themeService;
@@ -86,12 +91,14 @@ public partial class MainViewModel : ObservableObject, IDisposable
             current.Add(id);
         _themeService.SetEnabledMetrics(current);
         OnPropertyChanged(nameof(EnabledMetricIds));
+        OnPropertyChanged(nameof(IsUsageLimitsSectionEnabled));
     }
 
     public void SetEnabledMetrics(IEnumerable<string> orderedIds)
     {
         _themeService.SetEnabledMetrics(orderedIds);
         OnPropertyChanged(nameof(EnabledMetricIds));
+        OnPropertyChanged(nameof(IsUsageLimitsSectionEnabled));
     }
 
     [RelayCommand]

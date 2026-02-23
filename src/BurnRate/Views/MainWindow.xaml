@@ -136,24 +136,8 @@
                                 </Style>
                             </StackPanel.Style>
 
-                            <!-- Session + Weekly percentages side by side -->
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,8,0,0">
-                                <TextBlock FontSize="14">
-                                    <Run Text="Session: " Foreground="{DynamicResource TextSecondaryBrush}" /><Run Text="{Binding SelectedProfile.Usage.SessionPercentage, Converter={StaticResource PercentToText}, Mode=OneWay}" Foreground="{Binding SelectedProfile.Usage.SessionPercentage, Converter={StaticResource PercentToColor}}" />
-                                </TextBlock>
-                                <TextBlock FontSize="14" Margin="16,0,0,0">
-                                    <Run Text="Weekly: " Foreground="{DynamicResource TextSecondaryBrush}" /><Run Text="{Binding SelectedProfile.Usage.WeeklyPercentage, Converter={StaticResource PercentToText}, Mode=OneWay}" Foreground="{Binding SelectedProfile.Usage.WeeklyPercentage, Converter={StaticResource PercentToColor}}" />
-                                </TextBlock>
-                            </StackPanel>
-
-                            <!-- Reset times -->
-                            <TextBlock HorizontalAlignment="Center" FontSize="10"
-                                       Foreground="{DynamicResource TextMutedBrush}" Margin="0,3,0,2">
-                                <Run Text="Session resets " /><Run Text="{Binding SelectedProfile.Usage.SessionResetsAt, StringFormat={}{0:h:mm tt}, Mode=OneWay, TargetNullValue='—'}" /><Run Text="  ·  Wk resets " /><Run Text="{Binding SelectedProfile.Usage.WeeklyResetsAt, StringFormat={}{0:MMM dd h:mm tt}, Mode=OneWay, TargetNullValue='—'}" />
-                            </TextBlock>
-
                             <!-- Plan name + Live badge -->
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,2,0,0">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,8,0,0">
                                 <TextBlock Text="{Binding SelectedProfile.PlanDisplayName, Mode=OneWay, FallbackValue='Unknown Plan'}"
                                            Style="{StaticResource SubHeaderText}" />
                                 <Border Background="#2E7D32" CornerRadius="3" Padding="5,1" Margin="6,0,0,0"
@@ -194,6 +178,25 @@
                                        Style="{StaticResource SubHeaderText}" />
                         </StackPanel>
                     </StackPanel>
+
+                    <!-- ===== 1.5 Usage Limits (live API only, selectable via metrics picker) ===== -->
+                    <controls:UsageLimitsBar Usage="{Binding SelectedProfile.Usage, Mode=OneWay}"
+                                              Margin="0,0,0,8">
+                        <controls:UsageLimitsBar.Style>
+                            <Style TargetType="controls:UsageLimitsBar">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <MultiDataTrigger>
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding SelectedProfile.Usage.IsLive}" Value="True" />
+                                            <Condition Binding="{Binding IsUsageLimitsSectionEnabled}" Value="True" />
+                                        </MultiDataTrigger.Conditions>
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </MultiDataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </controls:UsageLimitsBar.Style>
+                    </controls:UsageLimitsBar>
 
                     <!-- ===== 2. Metric Cards (dynamic, user-configured via tray → Metrics) ===== -->
                     <ItemsControl ItemsSource="{Binding SelectedProfile.ActiveMetrics, Mode=OneWay}"

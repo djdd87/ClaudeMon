@@ -26,6 +26,11 @@ public static class MetricRegistry
 
     public static readonly IReadOnlyList<MetricDefinition> All =
     [
+        new("UsageLimits",
+            "USAGE LIMITS",
+            "Live API usage limit bars (session, weekly, sonnet, extra). Only visible when live data is available.",
+            u => u.IsLive ? "Live" : "—"),
+
         new("TodayMessages",
             "TODAY MSGS",
             "Total human messages sent to Claude today. Excludes tool results and system-injected content.",
@@ -83,7 +88,7 @@ public static class MetricRegistry
     ];
 
     public static readonly IReadOnlyList<string> DefaultEnabled =
-        ["TodaySessions", "WeeklyTokens", "DailyBurn", "Runway"];
+        ["UsageLimits", "TodaySessions", "WeeklyTokens", "DailyBurn", "Runway"];
 
     public static MetricDefinition? Find(string id) =>
         All.FirstOrDefault(d => d.Id == id);
