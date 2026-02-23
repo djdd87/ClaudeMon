@@ -10,7 +10,8 @@
         Background="Transparent"
         ResizeMode="NoResize"
         ShowInTaskbar="False"
-        Topmost="True">
+        Topmost="True"
+        Deactivated="Window_Deactivated">
 
     <Window.Resources>
         <!-- Small icon button used for ↑ ↓ ✕ + actions -->

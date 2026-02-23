@@ -16,6 +16,11 @@ public partial class MetricsManagerWindow : Window
             DragMove();
     }
 
+    private void Window_Deactivated(object sender, EventArgs e)
+    {
+        Close();
+    }
+
     private void CloseButton_Click(object sender, RoutedEventArgs e)
     {
         Close();

@@ -104,7 +104,8 @@ public partial class MainViewModel : ObservableObject, IDisposable
         }
         _metricsManagerWindow = new MetricsManagerWindow
         {
-            DataContext = new MetricsManagerViewModel(this)
+            DataContext = new MetricsManagerViewModel(this),
+            Owner = _mainWindow
         };
         _metricsManagerWindow.Closed += (_, _) => _metricsManagerWindow = null;
         _metricsManagerWindow.Show();
