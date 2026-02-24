@@ -13,12 +13,6 @@
 
     <StandardDirectory Id="ProgramFiles6432Folder">
       <Directory Id="INSTALLFOLDER" Name="BurnRate">
-        <Component Id="MainExecutable" Guid="1A2B3C4D-5E6F-7A8B-9C0D-1E2F3A4B5C6D">
-          <File Id="BurnRateExe" Source="$(var.PublishDir)\BurnRate.exe" KeyPath="yes" />
-        </Component>
-        <Component Id="AppSettings" Guid="2B3C4D5E-6F7A-8B9C-0D1E-2F3A4B5C6D7E">
-          <File Id="AppSettingsJson" Source="$(var.PublishDir)\appsettings.json" KeyPath="yes" />
-        </Component>
         <Component Id="AutoStart" Guid="3C4D5E6F-7A8B-9C0D-1E2F-3A4B5C6D7E8F">
           <RegistryValue
             Root="HKCU"
@@ -52,9 +46,15 @@
       </Directory>
     </StandardDirectory>
 
+    <!-- Include all files from the publish directory so native WPF DLLs
+         (wpfgfx_cor3.dll, PresentationNative_cor3.dll, D3DCompiler_47_cor3.dll, etc.)
+         are installed alongside the exe. PublishSingleFile leaves these as loose files. -->
+    <ComponentGroup Id="PublishFiles" Directory="INSTALLFOLDER">
+      <Files Include="$(var.PublishDir)\*" />
+    </ComponentGroup>
+
     <Feature Id="Main" Title="BurnRate" Level="1">
-      <ComponentRef Id="MainExecutable" />
-      <ComponentRef Id="AppSettings" />
+      <ComponentGroupRef Id="PublishFiles" />
       <ComponentRef Id="AutoStart" />
       <ComponentRef Id="StartMenuShortcut" />
     </Feature>
