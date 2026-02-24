@@ -18,7 +18,8 @@ public partial class MetricsManagerWindow : Window
 
     private void Window_Deactivated(object sender, EventArgs e)
     {
-        Close();
+        if (IsLoaded)
+            Close();
     }
 
     private void CloseButton_Click(object sender, RoutedEventArgs e)

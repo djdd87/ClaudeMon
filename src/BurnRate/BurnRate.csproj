@@ -9,8 +9,8 @@
     <ApplicationIcon>Resources\Icons\app-icon.ico</ApplicationIcon>
     <AssemblyName>BurnRate</AssemblyName>
     <RootNamespace>BurnRate</RootNamespace>
-    <Version>0.5.2</Version>
-    <AssemblyVersion>0.5.2.0</AssemblyVersion>
+    <Version>0.5.3</Version>
+    <AssemblyVersion>0.5.3.0</AssemblyVersion>
   </PropertyGroup>
 
   <ItemGroup>
