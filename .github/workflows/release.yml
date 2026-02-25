@@ -57,6 +57,7 @@ jobs:
           wix build installer/BurnRate.wxs
           -ext WixToolset.UI.wixext
           -ext WixToolset.Util.wixext
+          -b installer
           -d PublishDir=publish
           -d Version=${{ steps.version.outputs.version }}
           -o ./output/BurnRate-${{ steps.version.outputs.version }}.msi

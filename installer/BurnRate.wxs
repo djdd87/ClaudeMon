@@ -51,9 +51,7 @@
     <!-- Include all files from the publish directory so native WPF DLLs
          (wpfgfx_cor3.dll, PresentationNative_cor3.dll, D3DCompiler_47_cor3.dll, etc.)
          are installed alongside the exe. PublishSingleFile leaves these as loose files. -->
-    <ComponentGroup Id="PublishFiles" Directory="INSTALLFOLDER">
-      <Files Include="$(var.PublishDir)\*" />
-    </ComponentGroup>
+    <ComponentGroup Id="PublishFiles" Directory="INSTALLFOLDER" Source="$(var.PublishDir)" />
 
     <!-- Required: application files and start menu shortcut -->
     <Feature Id="Main" Title="BurnRate" Level="1"
