@@ -56,7 +56,7 @@
     </ComponentGroup>
 
     <!-- Required: application files and start menu shortcut -->
-    <Feature Id="Main" Title="BurnRate" Level="1" Absent="disallow"
+    <Feature Id="Main" Title="BurnRate" Level="1"
              Description="The BurnRate system tray application and Start Menu shortcut.">
       <ComponentGroupRef Id="PublishFiles" />
       <ComponentRef Id="StartMenuShortcut" />
@@ -80,14 +80,13 @@
       DllEntry="WixShellExec"
       Impersonate="yes"
       Execute="immediate"
-      Return="asyncNoWait" />
+      Return="ignore" />
 
     <!-- Run in UI sequence so the action fires after the user clicks Finish
          (after WIXUI_EXITDIALOGOPTIONALCHECKBOX reflects their final choice). -->
     <InstallUISequence>
-      <Custom Action="LaunchBurnRate" OnExit="success">
-        WIXUI_EXITDIALOGOPTIONALCHECKBOX = 1 AND NOT Installed
-      </Custom>
+      <Custom Action="LaunchBurnRate" OnExit="success"
+              Condition="WIXUI_EXITDIALOGOPTIONALCHECKBOX = 1 AND NOT Installed" />
     </InstallUISequence>
 
     <!-- Wizard: shows license, feature tree (with "Start with Windows" toggle),

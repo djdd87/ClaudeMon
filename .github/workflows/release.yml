@@ -45,12 +45,12 @@ jobs:
           -o ./publish
 
       - name: Install WiX
-        run: dotnet tool install --global wix --version "4.0.4"
+        run: dotnet tool install --global wix --version "4.0.5"
 
       - name: Add WiX extensions
         run: |
-          wix extension add WixToolset.UI.wixext/4.0.4
-          wix extension add WixToolset.Util.wixext/4.0.4
+          wix extension add WixToolset.UI.wixext/4.0.5
+          wix extension add WixToolset.Util.wixext/4.0.5
 
       - name: Build MSI
         run: >
