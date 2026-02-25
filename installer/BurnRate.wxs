@@ -71,7 +71,14 @@
          after the user clicks Finish — meaning the checkbox state is respected. -->
     <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOX" Value="1" />
     <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOXTEXT" Value="Launch BurnRate" />
-    <Property Id="WixShellExecTarget" Value="[INSTALLFOLDER]BurnRate.exe" />
+
+    <!-- Set WixShellExecTarget at runtime so [INSTALLFOLDER] is resolved.
+         Scheduled After="ExecuteAction" so it runs after install completes
+         but before the exit dialog — OnExit termination actions can't be
+         used as scheduling anchors. -->
+    <CustomAction Id="SetLaunchTarget"
+      Property="WixShellExecTarget"
+      Value="[INSTALLFOLDER]BurnRate.exe" />
 
     <CustomAction Id="LaunchBurnRate"
       BinaryRef="Wix4UtilCA_X64"
@@ -80,9 +87,8 @@
       Execute="immediate"
       Return="ignore" />
 
-    <!-- Run in UI sequence so the action fires after the user clicks Finish
-         (after WIXUI_EXITDIALOGOPTIONALCHECKBOX reflects their final choice). -->
     <InstallUISequence>
+      <Custom Action="SetLaunchTarget" After="ExecuteAction" />
       <Custom Action="LaunchBurnRate" OnExit="success"
               Condition="WIXUI_EXITDIALOGOPTIONALCHECKBOX = 1 AND NOT Installed" />
     </InstallUISequence>
