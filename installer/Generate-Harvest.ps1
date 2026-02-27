@@ -3,7 +3,16 @@ param(
     [Parameter(Mandatory)][string]$OutFile
 )
 
-$files = Get-ChildItem -Path $PublishDir -File -Recurse | Sort-Object FullName
+# Exclude custom themes that contain third-party copyrighted assets.
+# The Doom theme ships only in the source repo (see CustomThemes/Doom/ATTRIBUTION.md).
+$excludedDirs = @('CustomThemes\Doom')
+
+$files = Get-ChildItem -Path $PublishDir -File -Recurse |
+    Where-Object {
+        $rel = [System.IO.Path]::GetRelativePath($PublishDir, $_.FullName)
+        -not ($excludedDirs | Where-Object { $rel.StartsWith($_, [System.StringComparison]::OrdinalIgnoreCase) })
+    } |
+    Sort-Object FullName
 
 $sb = [System.Text.StringBuilder]::new()
 [void]$sb.AppendLine('<?xml version="1.0" encoding="UTF-8"?>')
